@@ -1,0 +1,26 @@
+# Docker Compose Override for Development
+# This file is automatically loaded by docker-compose for local development
+
+version: '3.8'
+
+services:
+  email-categorizer:
+    # Mount source code for development
+    volumes:
+      - .:/app
+      - ./config.ini:/app/config.ini:ro
+      - ./logs:/app/logs
+    
+    # Override to run in development mode
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+      - TZ=Africa/Johannesburg
+      - CHECK_INTERVAL=60  # Faster checking for development
+    
+    # Enable more verbose logging for development
+    command: ["python3", "email_categorizer_continuous.py", "60"]
+    
+    # Development specific ports (if needed)
+    ports:
+      - "8080:8080"

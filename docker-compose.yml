@@ -1,0 +1,165 @@
+# Docker Compose for AI Email Categorization System
+version: '3.8'
+
+services:
+  # Main email categorization service
+  email-categorizer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_DATE: ${BUILD_DATE:-$(date -u +'%Y-%m-%dT%H:%M:%SZ')}
+        VERSION: ${VERSION:-1.2.0}
+        VCS_REF: ${VCS_REF:-$(git rev-parse --short HEAD)}
+    image: email-categorizer:latest
+    container_name: email-categorizer-main
+    restart: unless-stopped
+    
+    # Environment variables
+    environment:
+      - TZ=Africa/Johannesburg
+      - PYTHONUNBUFFERED=1
+      - CATEGORIZER_MODE=continuous
+      - CHECK_INTERVAL=300
+    
+    # Mount configuration and logs
+    volumes:
+      - ./config.ini:/app/config.ini:ro
+      - ./logs:/app/logs
+      - categorizer-data:/app/data
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Networks
+    networks:
+      - emailcat-network
+
+  # Optional: Manual execution service (for one-time runs)
+  email-categorizer-manual:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: email-categorizer:latest
+    container_name: email-categorizer-manual
+    profiles: ["manual"]  # Only start when explicitly requested
+    
+    environment:
+      - TZ=Africa/Johannesburg
+      - PYTHONUNBUFFERED=1
+    
+    volumes:
+      - ./config.ini:/app/config.ini:ro
+      - ./logs:/app/logs
+    
+    command: ["python3", "email_categorizer.py"]
+    
+    networks:
+      - emailcat-network
+
+  # Optional: Dry run service (for testing)
+  email-categorizer-dryrun:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: email-categorizer:latest
+    container_name: email-categorizer-dryrun
+    profiles: ["dryrun"]  # Only start when explicitly requested
+    
+    environment:
+      - TZ=Africa/Johannesburg
+      - PYTHONUNBUFFERED=1
+    
+    volumes:
+      - ./config.ini:/app/config.ini:ro
+      - ./logs:/app/logs
+    
+    command: ["python3", "email_categorizer_dry_run.py", "ALL", "5"]
+    
+    networks:
+      - emailcat-network
+
+  # Optional: Monitoring and logging (Prometheus + Grafana)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: email-categorizer-prometheus
+    profiles: ["monitoring"]
+    restart: unless-stopped
+    
+    ports:
+      - "9090:9090"
+    
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    
+    networks:
+      - emailcat-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: email-categorizer-grafana
+    profiles: ["monitoring"]
+    restart: unless-stopped
+    
+    ports:
+      - "3000:3000"
+    
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=emailcat_admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    
+    networks:
+      - emailcat-network
+
+# Named volumes for data persistence
+volumes:
+  categorizer-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+# Network configuration
+networks:
+  emailcat-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

@@ -1,0 +1,145 @@
+# Git and version control
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+docs/
+documentation/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Testing
+.tox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Logs and runtime files
+*.log
+logs/
+*.pid
+*.seed
+*.pid.lock
+
+# Runtime data
+pids/
+*.tmp
+*.temp
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+circle.yml
+
+# Docker
+Dockerfile.*
+docker-compose*.yml
+.dockerignore
+
+# IDE specific folders
+.cursor/
+.roo/
+.taskmaster/
+.windsurfrules
+.roomodes
+
+# Local configuration (these should be mounted as volumes)
+config.ini
+!config.ini.example
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# Development tools
+.pre-commit-config.yaml
+.flake8
+.pylintrc
+mypy.ini
+tox.ini
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.cert
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Large files that shouldn't be in Docker image
+*.iso
+*.dmg
+*.exe
+*.msi

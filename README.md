@@ -64,6 +64,60 @@ The system automatically sorts emails into these 13 business-focused folders:
 
 ## 🚀 Quick Start
 
+### 🐳 Docker Deployment (Recommended)
+
+**Prerequisites:**
+- Docker and Docker Compose installed
+- Your API keys (HuggingFace, OpenAI)
+- Email server credentials
+
+**Quick Docker Setup:**
+```bash
+# 1. Clone the repository
+git clone https://github.com/jlwainwright/email-categorization.git
+cd email-categorization
+
+# 2. Copy and configure settings
+cp config.ini.example config.ini
+# Edit config.ini with your email and API credentials
+
+# 3. Start the system
+docker-compose up -d
+
+# 4. Check logs
+docker-compose logs -f email-categorizer
+
+# 5. Test with dry run
+docker-compose --profile dryrun up email-categorizer-dryrun
+```
+
+**Docker Management Commands:**
+```bash
+# Start continuous monitoring
+docker-compose up -d
+
+# Stop all services
+docker-compose down
+
+# View logs
+docker-compose logs -f
+
+# Run one-time categorization
+docker-compose --profile manual up email-categorizer-manual
+
+# Run dry run test
+docker-compose --profile dryrun up email-categorizer-dryrun
+
+# Start with monitoring (Prometheus + Grafana)
+docker-compose --profile monitoring up -d
+
+# Rebuild after code changes
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+### 🔧 Native Installation
+
 ### 1. Configuration Setup
 
 **Email Server Configuration:**
@@ -191,6 +245,171 @@ crontab -e
 
 # Run every hour
 0 * * * * /path/to/email-categorization/run_categorizer.sh
+```
+
+## 🐳 Docker Deployment Guide
+
+### Container Architecture
+
+The system provides multiple deployment options through Docker:
+
+| Service | Purpose | Profile | Default |
+|---------|---------|---------|---------|
+| **email-categorizer** | Continuous monitoring (5min intervals) | default | ✅ Auto-start |
+| **email-categorizer-manual** | One-time execution | manual | Manual only |
+| **email-categorizer-dryrun** | Safe testing mode | dryrun | Manual only |
+| **prometheus** | Metrics collection | monitoring | Manual only |
+| **grafana** | Monitoring dashboard | monitoring | Manual only |
+
+### Docker Configuration
+
+**Environment Variables:**
+```bash
+# Set in docker-compose.yml or .env file
+TZ=Africa/Johannesburg          # Timezone
+CHECK_INTERVAL=300              # Check interval in seconds
+CATEGORIZER_MODE=continuous     # Mode: continuous, manual, dryrun
+PYTHONUNBUFFERED=1             # Python output buffering
+```
+
+**Volume Mounts:**
+```yaml
+volumes:
+  - ./config.ini:/app/config.ini:ro     # Read-only configuration
+  - ./logs:/app/logs                    # Persistent log storage
+  - categorizer-data:/app/data          # Application data
+```
+
+**Resource Limits:**
+```yaml
+deploy:
+  resources:
+    limits:
+      cpus: '1.0'      # Maximum 1 CPU core
+      memory: 512M     # Maximum 512MB RAM
+    reservations:
+      cpus: '0.25'     # Minimum 0.25 CPU
+      memory: 128M     # Minimum 128MB RAM
+```
+
+### Production Deployment
+
+**Option 1: Simple Continuous Mode**
+```bash
+# Start background email processing
+docker-compose up -d
+
+# Monitor progress
+docker-compose logs -f email-categorizer
+```
+
+**Option 2: Scheduled Manual Runs**
+```bash
+# Create cron job for periodic execution
+# Add to crontab: */30 * * * * cd /path/to/email-categorization && docker-compose --profile manual up email-categorizer-manual
+```
+
+**Option 3: Full Monitoring Stack**
+```bash
+# Start with Prometheus + Grafana monitoring
+docker-compose --profile monitoring up -d
+
+# Access Grafana dashboard
+open http://localhost:3000
+# Login: admin / emailcat_admin
+```
+
+### Container Management
+
+**Health Checks:**
+```bash
+# Check container health
+docker-compose ps
+
+# View health status
+docker inspect email-categorizer-main --format='{{.State.Health.Status}}'
+
+# Manual health check
+docker-compose exec email-categorizer python3 -c "import sys; sys.exit(0)"
+```
+
+**Log Management:**
+```bash
+# View real-time logs
+docker-compose logs -f
+
+# View specific service logs
+docker-compose logs email-categorizer
+
+# View last 100 lines
+docker-compose logs --tail=100
+
+# Follow logs with timestamps
+docker-compose logs -f -t
+```
+
+**Troubleshooting:**
+```bash
+# Enter container for debugging
+docker-compose exec email-categorizer bash
+
+# Run manual categorization inside container
+docker-compose exec email-categorizer python3 email_categorizer.py
+
+# Check configuration
+docker-compose exec email-categorizer cat config.ini
+
+# Test IMAP connection
+docker-compose exec email-categorizer python3 check_folders.py
+```
+
+### Security Considerations
+
+**Container Security:**
+- ✅ **Non-root user**: Runs as `emailcat` user (not root)
+- ✅ **Read-only config**: Configuration mounted read-only
+- ✅ **Minimal base image**: Uses Python slim image
+- ✅ **No sensitive data**: API keys in mounted config only
+
+**Network Security:**
+```yaml
+networks:
+  emailcat-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16  # Isolated network
+```
+
+**Best Practices:**
+- Mount `config.ini` as read-only volume
+- Use Docker secrets for sensitive data in production
+- Regular container updates: `docker-compose pull && docker-compose up -d`
+- Monitor resource usage and set appropriate limits
+
+### Performance Optimization
+
+**Multi-stage Build:**
+- Builder stage compiles dependencies
+- Production stage only includes runtime
+- ~50% smaller final image size
+
+**Caching Strategy:**
+```dockerfile
+# Copy requirements first for better layer caching
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+# Then copy application code
+COPY . .
+```
+
+**Resource Monitoring:**
+```bash
+# Monitor resource usage
+docker stats email-categorizer-main
+
+# View container resource limits
+docker inspect email-categorizer-main | grep -A 10 "Resources"
 ```
 
 ## 🔧 Technical Details

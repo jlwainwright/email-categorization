@@ -1,0 +1,75 @@
+# Production Docker Compose Configuration
+# Use: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+version: '3.8'
+
+services:
+  email-categorizer:
+    # Production image settings
+    restart: always
+    
+    # Production environment variables
+    environment:
+      - TZ=Africa/Johannesburg
+      - PYTHONUNBUFFERED=1
+      - CHECK_INTERVAL=300  # 5 minutes for production
+      - LOG_LEVEL=INFO
+    
+    # Stricter resource limits for production
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    
+    # Production logging with rotation
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "5"
+    
+    # Health check more frequent in production
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import sys; sys.exit(0)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # Production monitoring stack
+  prometheus:
+    restart: always
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 128M
+
+  grafana:
+    restart: always
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD_FILE=/run/secrets/grafana_admin_password
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=https://monitoring.yourdomain.com
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 128M
+    secrets:
+      - grafana_admin_password
+
+secrets:
+  grafana_admin_password:
+    file: ./secrets/grafana_admin_password.txt
