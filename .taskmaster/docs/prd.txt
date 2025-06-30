@@ -1,0 +1,179 @@
+# AI-Powered Email Categorization System
+
+## Overview
+An intelligent email categorization system that automatically sorts incoming emails into predefined folders using advanced AI sentiment analysis and content categorization. The system integrates with IMAP email servers (primarily Gmail) and leverages HuggingFace's DistilBERT model for sentiment analysis and OpenAI's GPT-3.5-turbo for sophisticated email categorization. This solution eliminates manual email sorting, reduces inbox clutter, and improves email management efficiency for both personal and business users.
+
+## Core Features
+
+### Intelligent Email Processing
+- **IMAP Integration**: Secure SSL connection to email servers with support for Gmail and other IMAP providers
+- **Multi-format Support**: Handles multipart MIME messages, various text encodings, and complex email structures
+- **Content Extraction**: Intelligently extracts subject, sender, and body content while avoiding attachments
+- **Real-time Processing**: Monitors inbox for new emails and processes them automatically
+
+### AI-Powered Categorization
+- **Sentiment Analysis**: Uses HuggingFace DistilBERT model to analyze email sentiment and tone
+- **Content Classification**: Employs OpenAI GPT-3.5-turbo with structured prompts for accurate categorization
+- **13 Predefined Categories**: Comprehensive folder structure covering business and personal email types
+- **Fallback Handling**: Graceful error handling with default categorization when AI services fail
+
+### Automated Email Management
+- **Folder Movement**: Automatically moves emails to appropriate folders using IMAP operations
+- **Continuous Monitoring**: Background processing with configurable intervals (default 60 seconds)
+- **Daemon Support**: Unix daemon functionality for production deployment
+- **macOS Launch Agent**: Native macOS integration for automatic startup
+
+## User Experience
+
+### Target Users
+- **Business Professionals**: Executives, managers, and knowledge workers with high email volume
+- **Entrepreneurs**: Small business owners needing efficient email management
+- **Personal Users**: Individuals seeking to organize personal email communications
+
+### User Journey
+1. **Setup**: Configure IMAP credentials and API keys in config.ini
+2. **Folder Creation**: Ensure all 13 predefined folders exist in email account
+3. **Deployment**: Choose execution mode (manual, continuous, daemon, or launch agent)
+4. **Monitoring**: Review logs and categorization accuracy
+5. **Optimization**: Adjust settings based on categorization performance
+
+### Key User Flows
+- **One-time Execution**: Process current unread emails and exit
+- **Continuous Monitoring**: Background service processing new emails automatically
+- **Daemon Management**: Start/stop/restart background services
+- **Log Monitoring**: Track categorization results and system health
+
+## Technical Architecture
+
+### System Components
+- **Core Engine** (`email_categorizer.py`): Main categorization logic with IMAP integration
+- **Continuous Monitor** (`email_categorizer_continuous.py`): Wrapper for background processing
+- **Configuration Manager**: Handles API keys and email server settings
+- **Logging System**: Comprehensive logging for debugging and monitoring
+
+### Data Models
+- **Email Structure**: Subject, sender, body content, and metadata
+- **Category Mapping**: 13 predefined folders with business logic routing
+- **API Responses**: Structured JSON responses from AI services
+- **Processing Results**: Success/failure tracking with error details
+
+### APIs and Integrations
+- **IMAP4_SSL**: Secure email server communication
+- **HuggingFace API**: DistilBERT sentiment analysis (1000 character limit)
+- **OpenAI API**: GPT-3.5-turbo categorization with temperature 0.1
+- **Unix Daemon**: Background process management
+
+### Infrastructure Requirements
+- **Python 3.x**: Core runtime environment
+- **SSL/TLS**: Secure API and email communications
+- **File System**: Configuration files and logging
+- **Network**: Reliable internet connection for API calls
+
+## Development Roadmap
+
+### Phase 1: Core System Enhancement
+- **Error Recovery**: Implement connection retry logic and API failure handling
+- **Performance Optimization**: Batch processing and caching mechanisms
+- **Security Hardening**: Encrypt stored credentials and implement secure key management
+- **Monitoring Dashboard**: Web interface for real-time system status and statistics
+
+### Phase 2: Advanced AI Features
+- **Custom Categories**: User-defined folder structures and categorization rules
+- **Learning System**: Adaptive categorization based on user corrections
+- **Multi-language Support**: Internationalization for global email content
+- **Confidence Scoring**: Categorization confidence levels with manual review flags
+
+### Phase 3: Enterprise Features
+- **Multi-user Support**: Shared categorization rules and team management
+- **Integration APIs**: REST API for third-party system integration
+- **Advanced Analytics**: Email pattern analysis and productivity insights
+- **Scalability**: Support for high-volume email processing
+
+### Phase 4: Platform Expansion
+- **Cloud Deployment**: SaaS offering with managed infrastructure
+- **Mobile Apps**: iOS and Android applications for mobile email management
+- **Outlook Integration**: Microsoft Exchange and Outlook.com support
+- **Marketplace**: Community-driven categorization rule sharing
+
+## Logical Dependency Chain
+
+### Foundation Layer (Must Build First)
+1. **Configuration Management**: Secure credential storage and API key management
+2. **IMAP Connection**: Robust email server communication with error handling
+3. **Content Extraction**: Reliable parsing of various email formats
+4. **Basic Logging**: Essential debugging and monitoring capabilities
+
+### Core Processing Layer (Build Upon Foundation)
+1. **AI Integration**: HuggingFace and OpenAI API implementations
+2. **Categorization Engine**: Business logic for folder assignment
+3. **Email Movement**: IMAP operations for folder management
+4. **Error Handling**: Graceful failure recovery and fallback mechanisms
+
+### Automation Layer (Build Upon Core)
+1. **Continuous Processing**: Background monitoring and processing
+2. **Daemon Management**: Unix service integration
+3. **Schedule Management**: Configurable processing intervals
+4. **Health Monitoring**: System status and performance tracking
+
+### User Interface Layer (Final Layer)
+1. **Web Dashboard**: Real-time monitoring and configuration interface
+2. **Statistics Display**: Processing results and accuracy metrics
+3. **Manual Override**: User correction and rule adjustment capabilities
+4. **Settings Management**: Dynamic configuration updates
+
+## Risks and Mitigations
+
+### Technical Challenges
+- **API Rate Limits**: Implement request throttling and queue management
+- **Email Format Complexity**: Comprehensive MIME parsing and encoding handling
+- **Network Reliability**: Connection pooling and retry mechanisms
+- **Performance Bottlenecks**: Asynchronous processing and caching strategies
+
+### MVP Scope Definition
+- **Core Categorization**: Focus on 13 predefined categories with high accuracy
+- **Single User**: Avoid multi-user complexity in initial version
+- **Gmail Focus**: Prioritize Gmail compatibility over universal IMAP support
+- **Manual Setup**: Defer automated folder creation and configuration wizard
+
+### Resource Constraints
+- **API Costs**: Monitor usage and implement cost controls
+- **Development Time**: Prioritize core functionality over advanced features
+- **Testing Complexity**: Focus on unit tests for critical components
+- **Deployment Simplicity**: Shell scripts over complex orchestration
+
+## Appendix
+
+### Email Categories
+1. Client Communication / Client_Communication
+2. Completed & Archived
+3. Follow-Up Required
+4. General Inquiries
+5. Invoices & Payments
+6. Marketing & Promotions
+7. Pending & To Be Actioned
+8. Personal & Non-Business
+9. Reports & Documents
+10. Spam & Unwanted
+11. System & Notifications
+12. Urgent & Time-Sensitive
+
+### API Specifications
+- **HuggingFace**: DistilBERT sentiment analysis with 1000 character limit
+- **OpenAI**: GPT-3.5-turbo with structured JSON responses and temperature 0.1
+- **IMAP**: SSL/TLS encrypted connections with COPY/STORE/EXPUNGE operations
+
+### Current Implementation Status
+- Core categorization engine: ✅ Complete
+- Continuous monitoring: ✅ Complete
+- Daemon support: ✅ Complete
+- macOS Launch Agent: ✅ Complete
+- Basic logging: ✅ Complete
+- Configuration management: ✅ Complete
+
+### Enhancement Opportunities
+- Connection retry logic
+- Encrypted credential storage
+- Web-based monitoring dashboard
+- Custom categorization rules
+- Performance optimization
+- Multi-user support

@@ -1,0 +1,11 @@
+[IMAP]
+server = your_imap_server_here
+port = 993
+username = your_email@domain.com
+password = your_password_here
+
+[Hugging Face]
+api_key = your_huggingface_api_key_here
+
+[OpenAI]
+api_key = your_openai_api_key_here

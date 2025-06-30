@@ -1,0 +1,6 @@
+requests>=2.25.0
+cryptography>=3.4.0
+configparser>=5.0.0
+asyncio>=3.9.0
+beautifulsoup4>=4.9.0
+chardet>=4.0.0
