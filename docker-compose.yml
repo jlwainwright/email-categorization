@@ -57,6 +57,43 @@ services:
     networks:
       - emailcat-network
 
+  # Web Interface Service
+  web-interface:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: email-categorizer:latest
+    container_name: email-categorizer-web
+    restart: unless-stopped
+    
+    environment:
+      - TZ=Africa/Johannesburg
+      - PYTHONUNBUFFERED=1
+      - FLASK_ENV=production
+      - PORT=8082
+    
+    volumes:
+      - ./config.ini:/app/config.ini
+      - ./logs:/app/logs
+    
+    ports:
+      - "8082:8082"
+    
+    command: ["python3", "web_interface.py"]
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    
+    depends_on:
+      - email-categorizer
+    
+    networks:
+      - emailcat-network
+
   # Optional: Manual execution service (for one-time runs)
   email-categorizer-manual:
     build:
@@ -101,7 +138,7 @@ services:
     networks:
       - emailcat-network
 
-  # Optional: Monitoring and logging (Prometheus + Grafana)
+  # Prometheus Metrics Collection
   prometheus:
     image: prom/prometheus:latest
     container_name: email-categorizer-prometheus
@@ -112,7 +149,7 @@ services:
       - "9090:9090"
     
     volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
     
     command:
@@ -126,6 +163,7 @@ services:
     networks:
       - emailcat-network
 
+  # Grafana Dashboard
   grafana:
     image: grafana/grafana:latest
     container_name: email-categorizer-grafana
@@ -143,6 +181,147 @@ services:
       - grafana-data:/var/lib/grafana
       - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
       - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    
+    depends_on:
+      - prometheus
+    
+    networks:
+      - emailcat-network
+
+  # Container Metrics (cAdvisor)
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: email-categorizer-cadvisor
+    profiles: ["monitoring"]
+    restart: unless-stopped
+    
+    ports:
+      - "8080:8080"
+    
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    
+    privileged: true
+    devices:
+      - /dev/kmsg
+    
+    networks:
+      - emailcat-network
+
+  # Node Exporter (System Metrics)
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: email-categorizer-node-exporter
+    profiles: ["monitoring"]
+    restart: unless-stopped
+    
+    ports:
+      - "9100:9100"
+    
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    
+    networks:
+      - emailcat-network
+
+  # Loki (Log Aggregation)
+  loki:
+    image: grafana/loki:latest
+    container_name: email-categorizer-loki
+    profiles: ["monitoring"]
+    restart: unless-stopped
+    
+    ports:
+      - "3100:3100"
+    
+    volumes:
+      - ./monitoring/loki/loki.yml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    
+    command: -config.file=/etc/loki/local-config.yaml
+    
+    networks:
+      - emailcat-network
+
+  # Promtail (Log Shipping)
+  promtail:
+    image: grafana/promtail:latest
+    container_name: email-categorizer-promtail
+    profiles: ["monitoring"]
+    restart: unless-stopped
+    
+    volumes:
+      - ./monitoring/promtail/promtail.yml:/etc/promtail/config.yml:ro
+      - ./logs:/var/log/email-categorizer:ro
+      - /var/log:/var/log/host:ro
+    
+    command: -config.file=/etc/promtail/config.yml
+    
+    depends_on:
+      - loki
+    
+    networks:
+      - emailcat-network
+
+  # AlertManager (Alerting)
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: email-categorizer-alertmanager
+    profiles: ["monitoring"]
+    restart: unless-stopped
+    
+    ports:
+      - "9093:9093"
+    
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    
+    networks:
+      - emailcat-network
+
+  # Metrics Exporter (Custom Application Metrics)
+  metrics-exporter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: email-categorizer:latest
+    container_name: email-categorizer-metrics
+    profiles: ["monitoring"]
+    restart: unless-stopped
+    
+    environment:
+      - TZ=Africa/Johannesburg
+      - PYTHONUNBUFFERED=1
+      - METRICS_PORT=8000
+    
+    ports:
+      - "8000:8000"
+    
+    volumes:
+      - ./config.ini:/app/config.ini:ro
+      - ./logs:/app/logs:ro
+    
+    command: ["python3", "api_monitor.py", "--serve-metrics"]
+    
+    depends_on:
+      - email-categorizer
     
     networks:
       - emailcat-network

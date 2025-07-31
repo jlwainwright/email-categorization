@@ -166,6 +166,118 @@ class APIMonitor:
         
         # Check and print alerts
         self.print_alerts()
+    
+    def serve_metrics(self, port=8000):
+        """Serve Prometheus metrics on HTTP endpoint."""
+        from http.server import HTTPServer, BaseHTTPRequestHandler
+        import threading
+        
+        class MetricsHandler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                if self.path == '/metrics':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'text/plain')
+                    self.end_headers()
+                    
+                    # Generate Prometheus metrics
+                    metrics = self.generate_prometheus_metrics()
+                    self.wfile.write(metrics.encode())
+                elif self.path == '/health':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(b'{"status": "healthy"}')
+                else:
+                    self.send_response(404)
+                    self.end_headers()
+                    self.wfile.write(b'Not Found')
+            
+            def generate_prometheus_metrics(self):
+                """Generate Prometheus-formatted metrics."""
+                stats = rate_limiter.get_usage_stats()
+                metrics = []
+                
+                # API request metrics
+                for api_name, api_stats in stats.items():
+                    if api_name == 'cache_info':
+                        continue
+                    
+                    total_requests = api_stats.get('total_requests', 0)
+                    errors = api_stats.get('errors', 0)
+                    cached = api_stats.get('cached_responses', 0)
+                    rate_limited = api_stats.get('rate_limited', 0)
+                    
+                    metrics.extend([
+                        f'# HELP email_categorizer_api_requests_total Total API requests',
+                        f'# TYPE email_categorizer_api_requests_total counter',
+                        f'email_categorizer_api_requests_total{{api="{api_name}"}} {total_requests}',
+                        '',
+                        f'# HELP email_categorizer_api_errors_total Total API errors',
+                        f'# TYPE email_categorizer_api_errors_total counter',
+                        f'email_categorizer_api_errors_total{{api="{api_name}"}} {errors}',
+                        '',
+                        f'# HELP email_categorizer_api_cached_total Total cached responses',
+                        f'# TYPE email_categorizer_api_cached_total counter',
+                        f'email_categorizer_api_cached_total{{api="{api_name}"}} {cached}',
+                        '',
+                        f'# HELP email_categorizer_api_rate_limited_total Total rate limited requests',
+                        f'# TYPE email_categorizer_api_rate_limited_total counter',
+                        f'email_categorizer_api_rate_limited_total{{api="{api_name}"}} {rate_limited}',
+                        ''
+                    ])
+                    
+                    # Calculate rates
+                    if total_requests > 0:
+                        error_rate = (errors / total_requests) * 100
+                        cache_hit_rate = (cached / total_requests) * 100
+                        rate_limit_rate = (rate_limited / total_requests) * 100
+                        
+                        metrics.extend([
+                            f'# HELP email_categorizer_api_error_rate_percent API error rate percentage',
+                            f'# TYPE email_categorizer_api_error_rate_percent gauge',
+                            f'email_categorizer_api_error_rate_percent{{api="{api_name}"}} {error_rate:.2f}',
+                            '',
+                            f'# HELP email_categorizer_api_cache_hit_rate_percent Cache hit rate percentage',
+                            f'# TYPE email_categorizer_api_cache_hit_rate_percent gauge',
+                            f'email_categorizer_api_cache_hit_rate_percent{{api="{api_name}"}} {cache_hit_rate:.2f}',
+                            '',
+                            f'# HELP email_categorizer_api_rate_limit_rate_percent Rate limit rate percentage',
+                            f'# TYPE email_categorizer_api_rate_limit_rate_percent gauge',
+                            f'email_categorizer_api_rate_limit_rate_percent{{api="{api_name}"}} {rate_limit_rate:.2f}',
+                            ''
+                        ])
+                
+                # System metrics
+                metrics.extend([
+                    f'# HELP email_categorizer_system_timestamp_seconds Current system timestamp',
+                    f'# TYPE email_categorizer_system_timestamp_seconds gauge',
+                    f'email_categorizer_system_timestamp_seconds {time.time()}',
+                    '',
+                    f'# HELP email_categorizer_alerts_active Number of active alerts',
+                    f'# TYPE email_categorizer_alerts_active gauge',
+                    f'email_categorizer_alerts_active {len(self.check_alerts())}',
+                    ''
+                ])
+                
+                return '\n'.join(metrics)
+            
+            def log_message(self, format, *args):
+                """Override to reduce logging noise."""
+                pass
+        
+        # Bind to specific handler instance
+        MetricsHandler.check_alerts = lambda self: api_monitor.check_alerts()
+        
+        server = HTTPServer(('0.0.0.0', port), MetricsHandler)
+        print(f"📊 Metrics server started on port {port}")
+        print(f"🔗 Metrics endpoint: http://localhost:{port}/metrics")
+        print(f"❤️  Health endpoint: http://localhost:{port}/health")
+        
+        try:
+            server.serve_forever()
+        except KeyboardInterrupt:
+            print("\n📊 Metrics server stopped")
+            server.shutdown()
 
 # Global monitor instance
 api_monitor = APIMonitor()
@@ -177,10 +289,14 @@ if __name__ == "__main__":
     parser.add_argument('--report', action='store_true', help='Generate daily report')
     parser.add_argument('--alerts', action='store_true', help='Check for alerts')
     parser.add_argument('--log', action='store_true', help='Log current usage')
+    parser.add_argument('--serve-metrics', action='store_true', help='Start Prometheus metrics server')
+    parser.add_argument('--port', type=int, default=8000, help='Port for metrics server (default: 8000)')
     
     args = parser.parse_args()
     
-    if args.report:
+    if args.serve_metrics:
+        api_monitor.serve_metrics(args.port)
+    elif args.report:
         api_monitor.generate_daily_report()
     elif args.alerts:
         api_monitor.print_alerts()
