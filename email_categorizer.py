@@ -791,6 +791,40 @@ def _process_emails_sequential_mode(mail, email_nums, config):
         print(f"❌ Error in sequential processing mode: {e}")
         return False
 
+def test_imap_connection(config):
+    """Test IMAP connection for the web interface."""
+    try:
+        print("🔍 Testing IMAP connection...")
+        
+        # Connect to the mail server
+        mail = connect_to_mail_server(config)
+        if not mail:
+            return {'status': 'error', 'message': 'Failed to connect to IMAP server'}
+        
+        # Test selecting INBOX
+        mail.select('INBOX')
+        
+        # Test a simple search to verify access
+        result, data = mail.search(None, 'ALL')
+        if result != 'OK':
+            mail.logout()
+            return {'status': 'error', 'message': 'Failed to access INBOX'}
+        
+        # Count emails for info
+        email_count = len(data[0].split()) if data[0] else 0
+        
+        # Close connection
+        mail.logout()
+        
+        return {
+            'status': 'success',
+            'message': f'Successfully connected to IMAP server. Found {email_count} emails in INBOX.',
+            'email_count': email_count
+        }
+        
+    except Exception as e:
+        return {'status': 'error', 'message': f'Connection test failed: {str(e)}'}
+
 if __name__ == "__main__":
     config = load_config()
     process_emails(config)

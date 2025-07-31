@@ -72,8 +72,8 @@ ENV PYTHONPATH=/app \
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python3 -c "import sys; sys.exit(0)" || exit 1
 
-# Expose ports (if needed for future web interface)
-EXPOSE 8080
+# Expose ports for web interface and metrics
+EXPOSE 8082 8000
 
 # Default command - run continuous mode
 CMD ["python3", "email_categorizer_continuous.py", "300"]
