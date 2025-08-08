@@ -8,6 +8,7 @@ Interactive setup wizard for configuring email providers.
 import os
 import sys
 import configparser
+import argparse
 from email_providers import provider_manager, detect_email_provider
 from credential_manager import CredentialManager
 
@@ -18,12 +19,34 @@ class ProviderSetupWizard:
         self.config = configparser.ConfigParser()
         self.credential_manager = CredentialManager()
     
-    def run_setup(self):
-        """Run the complete setup wizard."""
+    def run_setup(self, non_interactive: bool = False, email_arg: str = None, server_arg: str = None, port_arg: int = None, password_arg: str = None, provider_id_arg: str = None, auto_encrypt: bool = False):
+        """Run the complete setup wizard.
+        If non_interactive is True, use provided args or environment variables and skip prompts.
+        """
         print("🔧" * 20)
         print("EMAIL PROVIDER SETUP WIZARD")
         print("🔧" * 20)
         print()
+        
+        if non_interactive:
+            email = email_arg or os.getenv('IMAP_USERNAME')
+            if not email:
+                print("❌ Non-interactive mode requires email via --email or IMAP_USERNAME env var")
+                sys.exit(1)
+            provider_id = provider_id_arg or detect_email_provider(email)
+            provider_config = provider_manager.get_provider_config(provider_id)
+            server = server_arg or os.getenv('IMAP_SERVER') or provider_config.imap_server
+            port = int(port_arg or os.getenv('IMAP_PORT') or provider_config.imap_port)
+            password = password_arg or os.getenv('IMAP_PASSWORD')
+            if not password:
+                print("❌ Non-interactive mode requires password via --password or IMAP_PASSWORD env var")
+                sys.exit(1)
+            if self._test_connection(provider_id, email, password, server, port):
+                self._save_configuration(provider_config, email, password, server, port, auto_encrypt=auto_encrypt)
+                print("\n✅ Setup completed successfully!")
+            else:
+                print("\n❌ Setup failed. Please check your credentials and try again.")
+            return
         
         # Step 1: Email address
         email = self._get_email_address()
@@ -183,7 +206,7 @@ class ProviderSetupWizard:
         print("   • Check your internet connection and firewall settings")
         print("   • Verify the email address and password are correct")
     
-    def _save_configuration(self, provider_config, email, password, server, port):
+    def _save_configuration(self, provider_config, email, password, server, port, auto_encrypt: bool = False):
         """Save configuration to file."""
         print("\n💾 Saving configuration...")
         
@@ -213,13 +236,20 @@ class ProviderSetupWizard:
         print("✅ Configuration saved to config.ini")
         
         # Encrypt configuration
-        encrypt_choice = input("\n🔒 Encrypt configuration for security? (Y/n): ").strip().lower()
-        if encrypt_choice in ['', 'y', 'yes']:
+        if auto_encrypt:
             success = self.credential_manager.migrate_from_plaintext()
             if success:
                 print("✅ Configuration encrypted successfully!")
             else:
                 print("⚠️  Encryption failed, but plaintext config is available.")
+        else:
+            encrypt_choice = input("\n🔒 Encrypt configuration for security? (Y/n): ").strip().lower()
+            if encrypt_choice in ['', 'y', 'yes']:
+                success = self.credential_manager.migrate_from_plaintext()
+                if success:
+                    print("✅ Configuration encrypted successfully!")
+                else:
+                    print("⚠️  Encryption failed, but plaintext config is available.")
         
         # Show next steps
         self._show_next_steps()
@@ -244,7 +274,18 @@ class ProviderSetupWizard:
 
 def main():
     """Main function."""
-    if len(sys.argv) > 1 and sys.argv[1] == '--provider-info':
+    parser = argparse.ArgumentParser(description="Email Provider Setup Wizard")
+    parser.add_argument('--provider-info', action='store_true', help='Show supported providers info and exit')
+    parser.add_argument('--non-interactive', action='store_true', help='Run setup without prompts using args/env vars')
+    parser.add_argument('--email', help='Email address (fallback to IMAP_USERNAME env)')
+    parser.add_argument('--server', help='IMAP server (fallback to IMAP_SERVER env or provider default)')
+    parser.add_argument('--port', type=int, help='IMAP port (fallback to IMAP_PORT env or provider default)')
+    parser.add_argument('--password', help='IMAP password (fallback to IMAP_PASSWORD env)')
+    parser.add_argument('--provider-id', help='Provider id if known (e.g., gmail, outlook, yahoo, generic)')
+    parser.add_argument('--auto-encrypt', action='store_true', help='Encrypt config without prompt')
+    args = parser.parse_args()
+
+    if args.provider_info:
         # Show provider information
         print("Supported Email Providers:")
         print("=" * 50)
@@ -254,15 +295,24 @@ def main():
             print(f"  OAuth2: {'Yes' if provider['oauth2_supported'] else 'No'}")
             print(f"  App Password: {'Required' if provider['app_password_required'] else 'Not required'}")
             print()
-    else:
-        # Run setup wizard
-        wizard = ProviderSetupWizard()
-        try:
-            wizard.run_setup()
-        except KeyboardInterrupt:
-            print("\n\n❌ Setup cancelled by user.")
-        except Exception as e:
-            print(f"\n❌ Setup failed: {e}")
+        return
+    
+    # Run setup wizard
+    wizard = ProviderSetupWizard()
+    try:
+        wizard.run_setup(
+            non_interactive=args.non_interactive,
+            email_arg=args.email,
+            server_arg=args.server,
+            port_arg=args.port,
+            password_arg=args.password,
+            provider_id_arg=args.provider_id,
+            auto_encrypt=args.auto_encrypt,
+        )
+    except KeyboardInterrupt:
+        print("\n\n❌ Setup cancelled by user.")
+    except Exception as e:
+        print(f"\n❌ Setup failed: {e}")
 
 if __name__ == "__main__":
     main()
