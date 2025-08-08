@@ -60,6 +60,34 @@ def load_config():
             print("If you have a plaintext config, encrypt it with:")
             print("python3 credential_manager.py --encrypt")
             sys.exit(1)
+        # Apply environment overrides
+        if not config.has_section('IMAP'):
+            config['IMAP'] = {}
+        if not config.has_section('Hugging Face'):
+            config['Hugging Face'] = {}
+        if not config.has_section('OpenAI'):
+            config['OpenAI'] = {}
+
+        server_env = os.getenv('IMAP_SERVER')
+        if server_env:
+            config['IMAP']['server'] = server_env
+        port_env = os.getenv('IMAP_PORT')
+        if port_env:
+            config['IMAP']['port'] = port_env
+        username_env = os.getenv('IMAP_USERNAME')
+        if username_env:
+            config['IMAP']['username'] = username_env
+        password_env = os.getenv('IMAP_PASSWORD')
+        if password_env:
+            config['IMAP']['password'] = password_env
+
+        hf_key = os.getenv('HUGGINGFACE_API_KEY')
+        if hf_key:
+            config['Hugging Face']['api_key'] = hf_key
+        openai_key = os.getenv('OPENAI_API_KEY')
+        if openai_key:
+            config['OpenAI']['api_key'] = openai_key
+
         return config
     except ImportError:
         # Fallback to plaintext if cryptography not available
@@ -70,6 +98,34 @@ def load_config():
         
         config = configparser.ConfigParser()
         config.read(CONFIG_FILE)
+        # Apply environment overrides
+        if not config.has_section('IMAP'):
+            config['IMAP'] = {}
+        if not config.has_section('Hugging Face'):
+            config['Hugging Face'] = {}
+        if not config.has_section('OpenAI'):
+            config['OpenAI'] = {}
+
+        server_env = os.getenv('IMAP_SERVER')
+        if server_env:
+            config['IMAP']['server'] = server_env
+        port_env = os.getenv('IMAP_PORT')
+        if port_env:
+            config['IMAP']['port'] = port_env
+        username_env = os.getenv('IMAP_USERNAME')
+        if username_env:
+            config['IMAP']['username'] = username_env
+        password_env = os.getenv('IMAP_PASSWORD')
+        if password_env:
+            config['IMAP']['password'] = password_env
+
+        hf_key = os.getenv('HUGGINGFACE_API_KEY')
+        if hf_key:
+            config['Hugging Face']['api_key'] = hf_key
+        openai_key = os.getenv('OPENAI_API_KEY')
+        if openai_key:
+            config['OpenAI']['api_key'] = openai_key
+
         return config
     except Exception as e:
         print(f"Error loading configuration: {e}")
