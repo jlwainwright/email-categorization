@@ -247,6 +247,38 @@ crontab -e
 0 * * * * /path/to/email-categorization/run_categorizer.sh
 ```
 
+### 🧪 Native Usage Helpers
+
+```bash
+# Install dependencies on managed environments (PEP 668)
+make install-local
+
+# Check IMAP folders safely (uses config.ini or env vars)
+make check-folders-native
+
+# Run a safe dry run against UNSEEN emails (uses config.ini or env vars)
+make dryrun-native
+```
+
+### 🔐 Environment Variable Overrides
+
+You can provide credentials via environment variables instead of `config.ini`:
+
+```bash
+export IMAP_SERVER="imap.example.com"
+export IMAP_PORT=993
+export IMAP_USERNAME="user@example.com"
+export IMAP_PASSWORD="app-password"
+export HUGGINGFACE_API_KEY="hf_xxx"
+export OPENAI_API_KEY="sk-xxx"
+
+# Then run
+python3 check_folders.py
+python3 email_categorizer_dry_run.py UNSEEN 3
+```
+
+These overrides apply to both `check_folders.py` and `email_categorizer_dry_run.py`.
+
 ## 🐳 Docker Deployment Guide
 
 ### Container Architecture
