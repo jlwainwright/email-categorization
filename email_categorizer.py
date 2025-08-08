@@ -568,6 +568,8 @@ def process_emails(config, use_batch_processing=True, batch_size=10):
             print("❌ Email processing completed with errors")
         else:
             print("✅ All emails processed successfully")
+
+        # Note: persistence is handled in web interface demo; CLI pipeline can be extended similarly.
             
     except Exception as e:
         print(f"Error in email processing: {e}")

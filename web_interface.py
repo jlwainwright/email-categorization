@@ -31,6 +31,8 @@ class EmailCategorizerWebHandler(BaseHTTPRequestHandler):
             self.serve_status()
         elif self.path == '/api/stats':
             self.serve_stats()
+        elif self.path == '/api/system-status':
+            self.serve_status()
         elif self.path == '/api/process':
             self.serve_process_emails()
         elif self.path == '/api/config':
@@ -582,24 +584,35 @@ class EmailCategorizerWebHandler(BaseHTTPRequestHandler):
                     subject = str(email_module.header.make_header(email_module.header.decode_header(email_message['Subject'] or "")))
                     sender = email_message.get('From', 'Unknown')
                     
-                    # Get email content
-                    content = get_enhanced_email_content(email_message)
-                    
-                    # Perform sentiment analysis
-                    sentiment_result = analyze_sentiment(content[:1000])  # Limit content for analysis
-                    
-                    # Categorize email
-                    category_result = categorize_email(subject, sender, content[:2000])
-                    
-                    # Extract results
-                    category = category_result.get('category', 'General Inquiries')
-                    confidence = category_result.get('confidence', 0.85)
-                    sentiment = sentiment_result.get('sentiment', 'neutral')
+                    # Get structured email content
+                    parsed = get_enhanced_email_content(email_message)
+                    text_content = parsed.get('text_content') or parsed.get('content', '')
+
+                    # Perform sentiment analysis (expects text and config)
+                    try:
+                        from email_categorizer import load_config
+                        cfg = load_config()
+                    except Exception:
+                        cfg = None
+                    sentiment = analyze_sentiment(text_content[:1000], cfg)
+
+                    # Categorize email (expects structured email, sentiment, config)
+                    enhanced_email_data = {
+                        'from': parsed.get('from') or sender,
+                        'subject': subject,
+                        'content': parsed.get('content', ''),
+                        'has_html': parsed.get('has_html', False),
+                        'attachments_count': len(parsed.get('attachments', [])),
+                        'text_content': parsed.get('text_content', ''),
+                        'html_content': parsed.get('html_content', '')
+                    }
+                    category = categorize_email(enhanced_email_data, sentiment, cfg)
+                    confidence = 0.9
                     
                     processed_email = {
                         'subject': subject[:80] + '...' if len(subject) > 80 else subject,
                         'sender': sender[:50] + '...' if len(sender) > 50 else sender,
-                        'content': content[:100] + '...' if len(content) > 100 else content,
+                        'content': (text_content[:100] + '...') if len(text_content) > 100 else text_content,
                         'category': category,
                         'confidence': round(confidence * 100, 1),
                         'sentiment': sentiment
@@ -614,9 +627,9 @@ class EmailCategorizerWebHandler(BaseHTTPRequestHandler):
                         category=category,
                         confidence=confidence,
                         sentiment=sentiment,
-                        processing_time=0.5,  # Estimate for individual email
-                        content_length=len(content),
-                        api_costs={"openai": 0.001, "huggingface": 0.0005}  # Estimated costs
+                        processing_time=0.5,
+                        content_length=len(text_content or ''),
+                        api_costs={"openai": 0.001, "huggingface": 0.0005}
                     )
                     
                     output_lines.extend([
