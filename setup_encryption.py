@@ -7,10 +7,16 @@ Interactive setup for encrypting email categorization credentials.
 
 import os
 import sys
+import argparse
 from credential_manager import CredentialManager
 
 def main():
     """Interactive encryption setup."""
+    parser = argparse.ArgumentParser(description="Credential encryption setup")
+    parser.add_argument('--auto-encrypt', action='store_true', help='Encrypt without prompting if plaintext exists')
+    parser.add_argument('--yes', '-y', action='store_true', help='Assume yes for prompts (e.g., remove plaintext)')
+    args = parser.parse_args()
+
     print("=" * 60)
     print("EMAIL CATEGORIZATION - CREDENTIAL ENCRYPTION SETUP")
     print("=" * 60)
@@ -36,6 +42,10 @@ def main():
         print("   Plaintext: config.ini")
         print("   Encrypted: config.encrypted")
         print()
+        if args.yes:
+            os.remove('config.ini')
+            print("✅ Plaintext config removed. Using encrypted config.")
+            return
         response = input("Remove plaintext config.ini? (y/N): ")
         if response.lower() == 'y':
             os.remove('config.ini')
@@ -54,6 +64,24 @@ def main():
         print("   • Protect against unauthorized access")
         print("   • Allow secure credential updates")
         print()
+        
+        if args.auto_encrypt:
+            success = cm.migrate_from_plaintext()
+            if success:
+                print()
+                print("✅ Configuration encrypted successfully!")
+                print("   Your credentials are now secure.")
+                print()
+                print("💡 Useful commands:")
+                print("   python3 credential_manager.py --change-password")
+                print("   python3 credential_manager.py --update SECTION KEY VALUE")
+                print()
+                print("🚀 You can now run the email categorizer:")
+                print("   python3 email_categorizer.py")
+            else:
+                print("❌ Encryption setup failed.")
+                sys.exit(1)
+            return
         
         response = input("Encrypt your configuration? (Y/n): ")
         if response.lower() in ['', 'y', 'yes']:
