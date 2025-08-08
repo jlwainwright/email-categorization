@@ -1,0 +1,44 @@
+[
+  {
+    "id": "high_leverage_no_sl",
+    "when": {
+      "leverageGreaterThan": 3,
+      "hasStopLoss": false
+    },
+    "message": "High leverage without a Stop‑Loss increases liquidation risk.",
+    "severity": "warning"
+  },
+  {
+    "id": "risk_over_2pct",
+    "when": {
+      "riskPercentOfEquityGreaterThan": 2
+    },
+    "message": "This trade risks over 2% of your account.",
+    "severity": "warning"
+  },
+  {
+    "id": "wide_spread_market",
+    "when": {
+      "orderType": "market",
+      "spreadPercentGreaterThan": 0.25
+    },
+    "message": "Wide spread may increase your cost. Consider a limit order.",
+    "severity": "info"
+  },
+  {
+    "id": "concentration_risk",
+    "when": {
+      "positionPercentOfEquityGreaterThan": 20
+    },
+    "message": "Large position vs. your equity (concentration risk).",
+    "severity": "info"
+  },
+  {
+    "id": "sl_close_to_liq",
+    "when": {
+      "stopLossDistanceFromLiquidationPercentLessThan": 1
+    },
+    "message": "Stop‑Loss is very close to liquidation price.",
+    "severity": "warning"
+  }
+]

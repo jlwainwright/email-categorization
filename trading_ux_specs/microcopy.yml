@@ -1,0 +1,25 @@
+tooltips:
+  leverage: "Controls more with less cash; amplifies gains/losses."
+  margin: "Cash set aside to keep a leveraged position open."
+  stop_loss: "Auto‑closes at a price to cap loss."
+  take_profit: "Auto‑closes at a price to lock gains."
+  spread: "Gap between buy and sell price; your implicit cost."
+  slippage: "Fill price can differ from requested price."
+  limit_order: "Controls price; may not fill."
+  market_order: "Fills now at current market price."
+  pnl: "Profit or loss on your trades."
+
+labels:
+  beginner_mode: "Beginner mode"
+  practice_mode: "Practice mode"
+  submit_order: "Place trade"
+  size: "Size"
+  leverage: "Leverage"
+  stop_loss: "Stop‑Loss"
+  take_profit: "Take Profit"
+
+warnings:
+  high_leverage_no_sl: "High leverage without a Stop‑Loss increases liquidation risk."
+  high_spread_market: "Wide spread may increase your cost. Consider a limit order."
+  risk_per_trade: "This trade risks over 2% of your account."
+  concentration: "Large position vs. your equity (concentration risk)."

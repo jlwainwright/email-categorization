@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "steps": [
+    {
+      "id": "portfolio",
+      "target": "#portfolio",
+      "title": "Your portfolio",
+      "body": "See your cash, positions, and overall performance.",
+      "placement": "right"
+    },
+    {
+      "id": "chart",
+      "target": "#chart",
+      "title": "The chart",
+      "body": "Candles show price moves. Start with candles + volume.",
+      "placement": "left"
+    },
+    {
+      "id": "order_ticket",
+      "target": "#order-ticket",
+      "title": "Place a trade",
+      "body": "Limit = control price; Market = fills now. Add a Stop‑Loss to cap risk.",
+      "placement": "left"
+    },
+    {
+      "id": "risk_guardrail",
+      "target": "#risk-guardrails",
+      "title": "Guard your risk",
+      "body": "Set Stop‑Loss and Take Profit. Keep risk per trade small.",
+      "placement": "top"
+    },
+    {
+      "id": "practice_mode",
+      "target": "#practice-toggle",
+      "title": "Practice mode",
+      "body": "Try trades with virtual funds before using real money.",
+      "placement": "bottom"
+    },
+    {
+      "id": "help_glossary",
+      "target": "#help",
+      "title": "Help & Glossary",
+      "body": "Tap ? anywhere to decode a term or concept.",
+      "placement": "bottom"
+    }
+  ]
+}

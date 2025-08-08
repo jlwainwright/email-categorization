@@ -1,0 +1,92 @@
+[
+  {
+    "id": "leverage",
+    "term": "Leverage",
+    "plainDefinition": "Borrowed money that lets you control a larger position with less cash.",
+    "example": "With 5× leverage, $100 controls $500; a 2% drop ≈ $10 loss.",
+    "whyItMatters": "Amplifies both gains and losses. Use with a stop-loss.",
+    "links": ["/learn/leverage"],
+    "tags": ["risk", "orders"]
+  },
+  {
+    "id": "margin",
+    "term": "Margin",
+    "plainDefinition": "The cash you must set aside to open/keep a leveraged position.",
+    "example": "At 5×, $100 margin opens a $500 position.",
+    "whyItMatters": "Falling below required margin can trigger liquidation.",
+    "links": ["/learn/margin"],
+    "tags": ["risk"]
+  },
+  {
+    "id": "stop_loss",
+    "term": "Stop-Loss",
+    "plainDefinition": "An instruction to close a trade at a set price to limit loss.",
+    "example": "Buy 100 at $10, SL $9.50 caps loss ≈ $50.",
+    "whyItMatters": "Primary tool to control downside.",
+    "links": ["/learn/stops"],
+    "tags": ["risk", "orders"]
+  },
+  {
+    "id": "take_profit",
+    "term": "Take Profit",
+    "plainDefinition": "Close a trade at a set price to lock in gains.",
+    "example": "Buy at $10, TP $10.50 ≈ $50 gain.",
+    "whyItMatters": "Automates exits to avoid giving back gains.",
+    "links": ["/learn/take-profit"],
+    "tags": ["orders"]
+  },
+  {
+    "id": "spread",
+    "term": "Spread",
+    "plainDefinition": "Difference between buy (ask) and sell (bid) price.",
+    "example": "Bid 9.98 / Ask 10.00 → spread $0.02 (0.2%).",
+    "whyItMatters": "You pay the spread when entering/exiting.",
+    "links": ["/learn/spread"],
+    "tags": ["pricing"]
+  },
+  {
+    "id": "slippage",
+    "term": "Slippage",
+    "plainDefinition": "Execution at a different price than requested.",
+    "example": "Market order at $10 fills $10.02 in fast markets.",
+    "whyItMatters": "Wider in volatile/illiquid markets.",
+    "links": ["/learn/slippage"],
+    "tags": ["execution"]
+  },
+  {
+    "id": "limit_order",
+    "term": "Limit Order",
+    "plainDefinition": "Buy/sell at a specific price or better.",
+    "example": "Buy limit $10 fills at $10 or lower.",
+    "whyItMatters": "Controls price, may not fill.",
+    "links": ["/learn/orders"],
+    "tags": ["orders"]
+  },
+  {
+    "id": "market_order",
+    "term": "Market Order",
+    "plainDefinition": "Buy/sell immediately at current market price.",
+    "example": "Executes now; price may vary.",
+    "whyItMatters": "Fast but exposed to slippage.",
+    "links": ["/learn/orders"],
+    "tags": ["orders"]
+  },
+  {
+    "id": "pnl",
+    "term": "P&L",
+    "plainDefinition": "Profit and Loss — the money gained or lost.",
+    "example": "Buy $100, sell $110 → +$10 P&L.",
+    "whyItMatters": "Tracks performance.",
+    "links": ["/learn/pnl"],
+    "tags": ["basics"]
+  },
+  {
+    "id": "liquidation",
+    "term": "Liquidation",
+    "plainDefinition": "Forced position close when margin is insufficient.",
+    "example": "Large adverse move at 10× can liquidate quickly.",
+    "whyItMatters": "Protects against negative balances.",
+    "links": ["/learn/liquidation"],
+    "tags": ["risk"]
+  }
+]
