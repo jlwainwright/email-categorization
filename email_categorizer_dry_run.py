@@ -38,9 +38,43 @@ CATEGORIES = [
 ]
 
 def load_config():
-    """Load configuration from config.ini file"""
+    """Load configuration from config.ini file and apply environment overrides"""
     config = configparser.ConfigParser()
     config.read(CONFIG_FILE)
+
+    # Ensure required sections exist
+    if not config.has_section('IMAP'):
+        config['IMAP'] = {}
+    if not config.has_section('Hugging Face'):
+        config['Hugging Face'] = {}
+    if not config.has_section('OpenAI'):
+        config['OpenAI'] = {}
+
+    # Environment variable overrides
+    # IMAP
+    server_env = os.getenv('IMAP_SERVER')
+    if server_env:
+        config['IMAP']['server'] = server_env
+    port_env = os.getenv('IMAP_PORT')
+    if port_env:
+        config['IMAP']['port'] = port_env
+    username_env = os.getenv('IMAP_USERNAME')
+    if username_env:
+        config['IMAP']['username'] = username_env
+    password_env = os.getenv('IMAP_PASSWORD')
+    if password_env:
+        config['IMAP']['password'] = password_env
+
+    # Hugging Face API key
+    hf_key = os.getenv('HUGGINGFACE_API_KEY')
+    if hf_key:
+        config['Hugging Face']['api_key'] = hf_key
+
+    # OpenAI API key
+    openai_key = os.getenv('OPENAI_API_KEY')
+    if openai_key:
+        config['OpenAI']['api_key'] = openai_key
+
     return config
 
 def get_sentiment_analysis(text):

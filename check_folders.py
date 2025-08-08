@@ -2,17 +2,23 @@
 import imaplib
 import ssl
 import configparser
+import os
+
 
 def check_imap_folders():
     # Read configuration
     config = configparser.ConfigParser()
     config.read('config.ini')
-    
-    server = config['IMAP']['server']
-    port = int(config['IMAP']['port'])
-    username = config['IMAP']['username']
-    password = config['IMAP']['password']
-    
+
+    if not config.has_section('IMAP'):
+        config['IMAP'] = {}
+
+    # Apply environment overrides
+    server = os.getenv('IMAP_SERVER', config['IMAP'].get('server', ''))
+    port = int(os.getenv('IMAP_PORT', str(config['IMAP'].get('port', '993'))))
+    username = os.getenv('IMAP_USERNAME', config['IMAP'].get('username', ''))
+    password = os.getenv('IMAP_PASSWORD', config['IMAP'].get('password', ''))
+
     # Required folders for email categorization
     required_folders = [
         'Client Communication',
@@ -29,18 +35,18 @@ def check_imap_folders():
         'System & Notifications',
         'Urgent & Time-Sensitive'
     ]
-    
+
     try:
         # Connect to IMAP server
         print(f"Connecting to {server}:{port}...")
         mail = imaplib.IMAP4_SSL(server, port)
         mail.login(username, password)
         print(f"Successfully logged in as {username}")
-        
+
         # List all folders
         print("\nListing all folders:")
         result, folders = mail.list()
-        
+
         if result == 'OK':
             existing_folders = []
             for folder in folders:
@@ -52,10 +58,10 @@ def check_imap_folders():
                 if len(parts) >= 3:
                     clean_name = parts[-2]
                     existing_folders.append(clean_name)
-        
+
         print(f"\nChecking for required folders:")
         missing_folders = []
-        
+
         for req_folder in required_folders:
             found = False
             for existing in existing_folders:
@@ -63,22 +69,23 @@ def check_imap_folders():
                     print(f"  ✓ Found: {req_folder} (matches: {existing})")
                     found = True
                     break
-            
+
             if not found:
                 print(f"  ✗ Missing: {req_folder}")
                 missing_folders.append(req_folder)
-        
+
         if missing_folders:
             print(f"\nMissing folders ({len(missing_folders)}):")
             for folder in missing_folders:
                 print(f"  - {folder}")
         else:
             print("\n✓ All required folders found!")
-        
+
         mail.logout()
-        
+
     except Exception as e:
         print(f"Error connecting to IMAP server: {e}")
+
 
 if __name__ == "__main__":
     check_imap_folders()
