@@ -90,6 +90,12 @@ dev-setup: ## Setup development environment
 install: ## Install dependencies locally (for development)
 	pip install -r requirements.txt
 
+install-local: ## Install dependencies locally with system-managed Python (PEP 668 override)
+	pip3 install -r requirements.txt --break-system-packages
+
+check: ## Run a quick compile-time syntax check (no network)
+	python3 -m compileall -q .
+
 # Quick actions
 quick-start: dev-setup up logs ## Complete setup and start with logs
 
