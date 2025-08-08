@@ -1,7 +1,7 @@
 # Makefile for Email Categorization System
 # Provides convenient commands for Docker operations
 
-.PHONY: help build up down logs test dryrun clean restart
+.PHONY: help build up down logs test dryrun clean restart install install-local dryrun-native check-folders-native
 
 # Default target
 help: ## Show this help message
@@ -28,6 +28,12 @@ restart: ## Restart all services
 # Testing commands
 dryrun: ## Run dry run test (preview mode)
 	docker-compose --profile dryrun up email-categorizer-dryrun
+
+dryrun-native: ## Run dry run natively (uses config.ini or env overrides)
+	python3 email_categorizer_dry_run.py UNSEEN 3
+
+check-folders-native: ## Check IMAP folders natively (uses config.ini or env overrides)
+	python3 check_folders.py
 
 test: ## Run one-time categorization test
 	docker-compose --profile manual up email-categorizer-manual
@@ -89,6 +95,9 @@ dev-setup: ## Setup development environment
 
 install: ## Install dependencies locally (for development)
 	pip install -r requirements.txt
+
+install-local: ## Install dependencies locally with system-managed Python (PEP 668 override)
+	pip3 install -r requirements.txt --break-system-packages
 
 # Quick actions
 quick-start: dev-setup up logs ## Complete setup and start with logs
